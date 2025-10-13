@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 train_model.py
------------------------------------
-Improved text classification model for conference prediction
-- Handles class imbalance
-- Reduces overfitting
-- Adds metrics, confusion matrix, and model saving
------------------------------------
 """
 
 import numpy as np
