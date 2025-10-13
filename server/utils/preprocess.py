@@ -1,73 +1,99 @@
+from flask import Flask, jsonify, send_file
 import os
 import csv
 import json
+from datetime import datetime
 
-# ---------- CONFIG ----------
-DATA_DIR = "../data"  # folder containing acl, iclr, conll, rejected
-CSV_PATH = "../data/conference_dataset.csv"
+app = Flask(__name__)
 
-FOLDERS = {
-    "rejected": {"iclr": 0, "conll": 0, "acl": 0},
-    "iclr": {"iclr": 1, "conll": 0, "acl": 0},
-    "conll": {"iclr": 0, "conll": 1, "acl": 0},
-    "acl": {"iclr": 0, "conll": 0, "acl": 1},
+# Base directories
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FOLDER = os.path.join(BASE_DIR, "..", "data")
+OUTPUT_FOLDER = os.path.join(DATA_FOLDER, "output")
+
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+# Mapping folder names to binary labels
+FOLDER_BINARY_MAP = {
+    "acl": "100",
+    "iclr": "010",
+    "other": "001",
+    "rejected": "000"
 }
 
-def extract_intro_from_json(json_path):
-    """
-    Extract title and introduction from parsed PDF JSON.
-    Returns empty strings if not available.
-    """
-    with open(json_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+@app.route('/')
+def index():
+    return jsonify({
+        "message": f"Place your JSON subfolders inside '{DATA_FOLDER}'. Visit /parse to extract title, introduction, references, and folder labels."
+    })
 
-    title = data.get("metadata", {}).get("title", "")
+@app.route('/parse', methods=['GET'])
+def parse_all_json():
+    # Get all subfolders
+    subfolders = [f for f in os.listdir(DATA_FOLDER) if os.path.isdir(os.path.join(DATA_FOLDER, f))]
+    json_entries = []
 
-    sections = data.get("metadata", {}).get("sections") or []
-    if len(sections) > 1:
-        intro = sections[1].get("text", "")
-    else:
-        intro = ""
+    for subfolder in subfolders:
+        folder_path = os.path.join(DATA_FOLDER, subfolder)
+        # Skip output folder
+        if subfolder.lower() == "output":
+            continue
 
-    return title, intro
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                if file.endswith(".json"):
+                    filepath = os.path.join(root, file)
+                    try:
+                        with open(filepath, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                    except Exception as e:
+                        print(f"Skipping {file}: {e}")
+                        continue
 
+                    # Extract title safely
+                    title = data.get("metadata", {}).get("title") or ""
 
-def create_csv_dataset():
-    os.makedirs(os.path.dirname(CSV_PATH), exist_ok=True)
-    total_samples = 0
+                    # Extract introduction safely
+                    introduction_text = ""
+                    sections = data.get("metadata", {}).get("sections") or []  # <- ensures sections is list
+                    for section in sections:
+                        heading = section.get("heading") or ""
+                        if "introduction" in heading.lower():
+                            introduction_text = section.get("text") or ""
+                            break
+                    introduction_text = introduction_text.replace("\n", " ").strip()
+                    introduction_text = introduction_text[:2000]  # truncate for readability
 
-    with open(CSV_PATH, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.writer(csvfile, delimiter=';')
-        writer.writerow(["sl", "file_name", "title", "introduction", "iclr", "conll", "acl"])
+                    # Extract references safely
+                    references = data.get("metadata", {}).get("references") or []
+                    references_list = [ref.get("title", "") for ref in references]
+                    references_str = " | ".join(references_list)  # pipe separated
 
-        sl = 1
-        for folder_name, labels in FOLDERS.items():
-            folder_path = os.path.join(DATA_DIR, folder_name)
-            if not os.path.exists(folder_path):
-                print(f"⚠️ Folder not found: {folder_path}")
-                continue
+                    # Folder labels
+                    folder_label = subfolder.lower()
+                    folder_label_binary = FOLDER_BINARY_MAP.get(folder_label, "001")  # default to 001
 
-            json_files = [f for f in os.listdir(folder_path) if f.endswith(".json")]
-            for json_file in json_files:
-                json_path = os.path.join(folder_path, json_file)
-                title, intro = extract_intro_from_json(json_path)
-                writer.writerow([
-                    sl,
-                    json_file,
-                    title,
-                    intro,
-                    labels["iclr"],
-                    labels["conll"],
-                    labels["acl"]
-                ])
-                sl += 1
-                total_samples += 1
+                    json_entries.append([
+                        file,
+                        title,
+                        introduction_text,
+                        references_str,
+                        folder_label,
+                        folder_label_binary
+                    ])
 
-                if total_samples % 100 == 0:
-                    print(f"Processed {total_samples} papers...")
+    if not json_entries:
+        return jsonify({"error": "No JSON files found in the subfolders"}), 404
 
-    print(f"\n✅ CSV dataset saved to {CSV_PATH}, total samples: {total_samples}")
+    # Write CSV
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_path = os.path.join(OUTPUT_FOLDER, f"parsed_{timestamp}.csv")
+    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["filename", "title", "introduction", "references", "folder_label", "folder_label_binary"])
+        writer.writerows(json_entries)
 
+    return send_file(csv_path, as_attachment=True)
 
-if __name__ == "__main__":
-    create_csv_dataset()
+if __name__ == '__main__':
+    app.run(debug=True)
