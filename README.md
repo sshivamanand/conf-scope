@@ -52,6 +52,12 @@ Place your trained model and vectorizer in the appropriate folder (e.g., `models
 
 ## 🧠 Usage
 
+### The model can be run by -
+```bash
+  cd models
+  python train_model.py
+```
+
 ### 1️⃣ Start the backend server
 
 ```bash
