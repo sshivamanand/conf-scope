@@ -24,7 +24,7 @@ import joblib
 # ---------------------------------------------------------------------
 # 1️⃣ Load dataset
 # ---------------------------------------------------------------------
-df = pd.read_csv("conf-scope/server/data/parsed_20251013_115823.csv")
+df = pd.read_csv("../data/parsed_20251013_115823.csv")
 print(f"Dataset loaded: {df.shape[0]} samples")
 
 # ---------------------------------------------------------------------
@@ -184,8 +184,9 @@ def predict_conference(title, intro):
     return result
 
 example = predict_conference(
-    "Neural Morphological Inflection",
-    "We propose a neural sequence model for morphological inflection..."
+    "Measures of Distributional Similarity",
+    '''In this work, Lee explores various distributional similarity measures to improve the estimation of probabilities for unseen co-occurrences. The study offers three main contributions: Empirical Comparison: An extensive evaluation of a broad range of similarity measures. Classification Framework: A categorization of similarity functions based on the information they incorporate.
+    Introduction of a Novel Function: The proposal of a new similarity measure that outperforms existing ones in evaluating potential proxy distributions. These contributions aim to enhance the accuracy of probability estimations for word pairs that are not directly observed in training data, thereby improving various NLP tasks that rely on such estimations.'''
 )
 
 print("\nPrediction Example:")
