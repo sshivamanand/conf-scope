@@ -60,7 +60,7 @@ function Landing() {
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">Multiple Venues</h3>
             <p className="text-gray-400">
-              Compare acceptance probabilities across ICLR, NeurIPS, ACL, EMNLP, and other major conferences.
+              Compare acceptance probabilities across the conferences ICLR, EMNLP and ACL.
             </p>
           </div>
 
