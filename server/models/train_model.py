@@ -166,9 +166,6 @@ joblib.dump(vectorizer, "tfidf_vectorizer.pkl")
 joblib.dump(label_encoder, "label_encoder.pkl")
 print("\nModel, vectorizer, and label encoder saved successfully.")
 
-# ---------------------------------------------------------------------
-# 15️⃣ Example prediction
-# ---------------------------------------------------------------------
 def predict_conference(title, intro):
     text = clean_text(f"{title} {intro}")
     vec = vectorizer.transform([text]).toarray()
