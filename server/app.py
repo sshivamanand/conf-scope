@@ -14,17 +14,11 @@ CORS(app)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# -------------------------------
-# 1️⃣ Load model, vectorizer, label encoder
-# -------------------------------
 model = load_model("models/conf_scope_model.h5")
 vectorizer = joblib.load("models/tfidf_vectorizer.pkl")
 label_encoder = joblib.load("models/label_encoder.pkl")
 num_classes = len(label_encoder.classes_)
 
-# -------------------------------
-# 2️⃣ Text cleaning functions
-# -------------------------------
 def clean_text(text):
     text = text.lower()
     text = re.sub(r"\d+", " ", text)
@@ -32,9 +26,6 @@ def clean_text(text):
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
-# -------------------------------
-# 3️⃣ PDF parsing function
-# -------------------------------
 def parse_pdf(filepath):
     with open(filepath, "rb") as f:
         reader = PyPDF2.PdfReader(f)
@@ -48,9 +39,6 @@ def parse_pdf(filepath):
     intro = " ".join(words[0:300]) if len(words) > 300 else text
     return title, intro
 
-# -------------------------------
-# 4️⃣ Prediction function
-# -------------------------------
 def predict_conference(title, intro):
     text = clean_text(f"{title} {intro}")
     vec = vectorizer.transform([text]).toarray()
@@ -59,14 +47,8 @@ def predict_conference(title, intro):
     result = {labels[i]: round(float(probs[i]), 3) for i in range(len(labels))}
     return result
 
-# -------------------------------
-# 5️⃣ Temporary storage for predictions
-# -------------------------------
 latest_prediction = {}
 
-# -------------------------------
-# 6️⃣ Routes
-# -------------------------------
 @app.route('/')
 def home():
     return "Flask server is running!"
@@ -82,18 +64,13 @@ def predict():
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
 
-    # Save PDF
     filepath = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(filepath)
-    print(f"📄 Received file: {file.filename}")
 
-    # Parse PDF
     title, intro = parse_pdf(filepath)
 
-    # Predict
     prediction = predict_conference(title, intro)
 
-    # Store prediction globally
     latest_prediction = {
         'filename': file.filename,
         'title': title,
@@ -101,7 +78,7 @@ def predict():
         'prediction': prediction
     }
 
-    return jsonify({'message': 'File processed successfully. Check /result for prediction.'}), 200
+    return jsonify(latest_prediction), 200   # ← THIS IS THE FIX
 
 @app.route('/result', methods=['GET'])
 def result():
@@ -109,9 +86,6 @@ def result():
         return jsonify({'error': 'No prediction available. Upload a PDF first.'}), 400
     return jsonify(latest_prediction), 200
 
-# -------------------------------
 if __name__ == '__main__':
     app.run(debug=True)
 
-a=10
-s='a'

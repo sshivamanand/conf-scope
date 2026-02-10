@@ -60,7 +60,7 @@ function Landing() {
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">Multiple Venues</h3>
             <p className="text-gray-400">
-              Compare acceptance probabilities across the conferences ICLR, EMNLP and ACL.
+              Compare acceptance probabilities across the conferences ICLR, ConLL and ACL.
             </p>
           </div>
 
@@ -70,7 +70,7 @@ function Landing() {
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">Data-Driven</h3>
             <p className="text-gray-400">
-              Powered by machine learning models trained on thousands of peer-reviewed papers.
+              Powered by machine learning model trained on thousands of peer-reviewed papers.
             </p>
           </div>
         </div>

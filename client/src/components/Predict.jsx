@@ -40,8 +40,8 @@ function Predict() {
       const data = await res.json();
       
       if (res.ok) {
-        // Navigate to /result route on successful upload
-        navigate('/result', { state: { filename: data.filename } });
+        // Navigate to /result route with results so it renders immediately
+        navigate('/result', { state: { results: data } });
       } else {
         setError(data.error || 'Failed to upload file');
       }

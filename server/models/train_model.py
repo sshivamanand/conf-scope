@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-train_model.py
-"""
-
 import numpy as np
 import pandas as pd
 import re
@@ -22,13 +17,13 @@ from tensorflow.keras.optimizers import Adam
 import joblib
 
 # ---------------------------------------------------------------------
-# 1️⃣ Load dataset
+# Load dataset
 # ---------------------------------------------------------------------
 df = pd.read_csv("../data/parsed_20251013_115823.csv")
 print(f"Dataset loaded: {df.shape[0]} samples")
 
 # ---------------------------------------------------------------------
-# 2️⃣ Combine title + introduction and clean text
+# Combine title + introduction and clean text
 # ---------------------------------------------------------------------
 def combine_text(row):
     title = str(row.get("title", ""))
@@ -47,7 +42,7 @@ def clean_text(text):
 df["clean_text"] = df["text"].apply(clean_text)
 
 # ---------------------------------------------------------------------
-# 3️⃣ Encode labels
+# Encode labels
 # ---------------------------------------------------------------------
 label_map = {
     "acl": "100",
@@ -65,7 +60,7 @@ num_classes = len(label_encoder.classes_)
 print("Label mapping:", dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_))))
 
 # ---------------------------------------------------------------------
-# 4️⃣ Split data (80% train, 20% test)
+# Split data (80% train, 20% test)
 # ---------------------------------------------------------------------
 X_train, X_test, y_train, y_test = train_test_split(
     df["clean_text"], df["label"],
@@ -73,7 +68,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # ---------------------------------------------------------------------
-# 5️⃣ TF-IDF vectorization
+# TF-IDF vectorization
 # ---------------------------------------------------------------------
 vectorizer = TfidfVectorizer(max_features=7500, ngram_range=(1, 2), stop_words="english")
 X_train_tfidf = vectorizer.fit_transform(X_train)
@@ -83,7 +78,7 @@ X_train_dense = X_train_tfidf.toarray()
 X_test_dense = X_test_tfidf.toarray()
 
 # ---------------------------------------------------------------------
-# 6️⃣ Handle class imbalance
+# Handle class imbalance
 # ---------------------------------------------------------------------
 class_weights = compute_class_weight(
     class_weight="balanced",
@@ -94,13 +89,13 @@ class_weights = dict(enumerate(class_weights))
 print(f"Class Weights: {class_weights}")
 
 # ---------------------------------------------------------------------
-# 7️⃣ Prepare labels for neural network
+# Prepare labels for neural network
 # ---------------------------------------------------------------------
 y_train_cat = to_categorical(y_train, num_classes=num_classes)
 y_test_cat = to_categorical(y_test, num_classes=num_classes)
 
 # ---------------------------------------------------------------------
-# 8️⃣ Build model (optimized for generalization)
+# Build model (optimized for generalization)
 # ---------------------------------------------------------------------
 model = Sequential([
     Dense(256, input_shape=(X_train_dense.shape[1],), activation='relu'),
@@ -115,12 +110,12 @@ model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['ac
 model.summary()
 
 # ---------------------------------------------------------------------
-# 9️⃣ Early stopping
+# Early stopping
 # ---------------------------------------------------------------------
 early_stop = EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
 
 # ---------------------------------------------------------------------
-# 🔟 Train model
+# Train model
 # ---------------------------------------------------------------------
 history = model.fit(
     X_train_dense, y_train_cat,
@@ -133,7 +128,7 @@ history = model.fit(
 )
 
 # ---------------------------------------------------------------------
-# 11️⃣ Evaluate performance
+# Evaluate performance
 # ---------------------------------------------------------------------
 train_loss, train_acc = model.evaluate(X_train_dense, y_train_cat, verbose=0)
 test_loss, test_acc = model.evaluate(X_test_dense, y_test_cat, verbose=0)
@@ -143,14 +138,14 @@ print(f"Training Accuracy: {train_acc:.3f}")
 print(f"Test Accuracy: {test_acc:.3f}")
 
 # ---------------------------------------------------------------------
-# 12️⃣ Classification report
+# Classification report
 # ---------------------------------------------------------------------
 y_pred = np.argmax(model.predict(X_test_dense), axis=1)
 print("\nClassification Report:")
 print(classification_report(y_test, y_pred, target_names=label_encoder.classes_))
 
 # ---------------------------------------------------------------------
-# 13️⃣ Confusion Matrix
+# Confusion Matrix
 # ---------------------------------------------------------------------
 cm = confusion_matrix(y_test, y_pred)
 plt.figure(figsize=(6, 5))
@@ -164,7 +159,7 @@ plt.tight_layout()
 plt.show()
 
 # ---------------------------------------------------------------------
-# 14️⃣ Save model and vectorizer
+# Save model and vectorizer
 # ---------------------------------------------------------------------
 model.save("conf_scope_model.h5")
 joblib.dump(vectorizer, "tfidf_vectorizer.pkl")
@@ -185,8 +180,7 @@ def predict_conference(title, intro):
 
 example = predict_conference(
     "Measures of Distributional Similarity",
-    '''In this work, Lee explores various distributional similarity measures to improve the estimation of probabilities for unseen co-occurrences. The study offers three main contributions: Empirical Comparison: An extensive evaluation of a broad range of similarity measures. Classification Framework: A categorization of similarity functions based on the information they incorporate.
-    Introduction of a Novel Function: The proposal of a new similarity measure that outperforms existing ones in evaluating potential proxy distributions. These contributions aim to enhance the accuracy of probability estimations for word pairs that are not directly observed in training data, thereby improving various NLP tasks that rely on such estimations.'''
+    "In this work, Lee explores various distributional similarity measures to improve the estimation of probabilities for unseen co-occurrences. The study offers three main contributions: Empirical Comparison: An extensive evaluation of a broad range of similarity measures."
 )
 
 print("\nPrediction Example:")
