@@ -66,7 +66,6 @@ def predict():
 
     filepath = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(filepath)
-    print(f"📄 Received file: {file.filename}")
 
     title, intro = parse_pdf(filepath)
 
@@ -79,7 +78,7 @@ def predict():
         'prediction': prediction
     }
 
-    return jsonify({'message': 'File processed successfully. Check /result for prediction.'}), 200
+    return jsonify(latest_prediction), 200   # ← THIS IS THE FIX
 
 @app.route('/result', methods=['GET'])
 def result():
